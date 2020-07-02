@@ -59,7 +59,7 @@ public class RCTImageSequenceView extends ImageView {
 
             }
             
-            
+            return null;
 
             
         }
@@ -120,7 +120,7 @@ public class RCTImageSequenceView extends ImageView {
             ((AnimationDrawable)drawable).stop();
         }
         }catch(Exception e){
-            
+
         }
         
         if (isLoading()) {
