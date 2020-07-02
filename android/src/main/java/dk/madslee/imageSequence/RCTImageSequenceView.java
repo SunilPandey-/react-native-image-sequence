@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.RejectedExecutionException;
 
+import android.graphics.drawable.Drawable;
+import java.io.File;
+import java.net.URI;
 
 public class RCTImageSequenceView extends ImageView {
     private Integer framesPerSecond = 24;
@@ -43,11 +46,22 @@ public class RCTImageSequenceView extends ImageView {
 
         @Override
         protected Bitmap doInBackground(String... params) {
-            if (this.uri.startsWith("http")) {
+            try{
+                if (this.uri.startsWith("http")) {
                 return this.loadBitmapByExternalURL(this.uri);
-            }
+            }else if (this.uri.startsWith("file://")) {
+                    File file = new File(new URI(this.uri));
+                    return BitmapFactory.decodeFile(file.getAbsolutePath());
+                }
+                return this.loadBitmapByLocalResource(this.uri);
 
-            return this.loadBitmapByLocalResource(this.uri);
+            }catch(Exception e){
+
+            }
+            
+            
+
+            
         }
 
 
@@ -57,12 +71,21 @@ public class RCTImageSequenceView extends ImageView {
 
         private Bitmap loadBitmapByExternalURL(String uri) {
             Bitmap bitmap = null;
-
+            InputStream in = null;
             try {
-                InputStream in = new URL(uri).openStream();
+                 in = new URL(uri).openStream();
                 bitmap = BitmapFactory.decodeStream(in);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            finally{
+                try{
+                    if(in != null){
+                        in.close();
+                    }
+                } catch(Exception e){
+
+                }
             }
 
             return bitmap;
@@ -70,7 +93,7 @@ public class RCTImageSequenceView extends ImageView {
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            if (!isCancelled()) {
+            if (!isCancelled() && bitmap != null) {
                 onTaskCompleted(this, index, bitmap);
             }
         }
@@ -91,6 +114,15 @@ public class RCTImageSequenceView extends ImageView {
     }
 
     public void setImages(ArrayList<String> uris) {
+        try{
+            Drawable drawable = getDrawable();
+        if(drawable instanceof AnimationDrawable){
+            ((AnimationDrawable)drawable).stop();
+        }
+        }catch(Exception e){
+            
+        }
+        
         if (isLoading()) {
             // cancel ongoing tasks (if still loading previous images)
             for (int index = 0; index < activeTasks.size(); index++) {
